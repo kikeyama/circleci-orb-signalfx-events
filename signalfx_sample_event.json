@@ -1,0 +1,13 @@
+[
+	{
+		"eventType": "Sample",
+		"dimensions": {
+			"service": "kikeyama_service"
+		}, 
+		"properties": {
+			"version": "1"
+		}, 
+		"category": "SERVICE_DISCOVERY",
+		"color": "#ff0000"
+	}
+]

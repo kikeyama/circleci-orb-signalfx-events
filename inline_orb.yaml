@@ -1,0 +1,86 @@
+version: 2.1
+description: Send build and deploy events to SignalFx
+display:
+  source_url: https://github.com/kikeyama/circleci-orb-signalfx-events
+
+orbs:
+  signalfx_orb:
+    executors:
+      signalfx_event_executor:
+        parameters:
+          version:
+            type: string
+            default: "2.4"
+        docker:
+          - image: circleci/ruby:<<parameters.version>>
+    commands:
+      signalfx_event_command:
+        description: Send events to SignalFx
+        parameters:
+          signalfx_access_token:
+            default: ${SIGNALFX_ACCESS_TOKEN}
+            description: Enter SignalFx access token or set env var SIGNALFX_ACCESS_TOKEN
+            type: string
+          signalfx_realm:
+            default: ${SIGNALFX_REALM}
+            description: Enter SignalFx realm (us0, us1, eu0, etc) or set env var SIGNALFX_REALM
+            type: string
+          service:
+            default: ${CIRCLE_PROJECT_REPONAME}
+            description: Service name used in SignalFx
+            type: string
+          event_type:
+            default: ${CIRCLE_JOB}
+            description: Enter event name (e.g. deploy | build | rollback)
+            type: string
+        steps:
+          - run:
+              when: on_success
+              name: set_status_success
+              command: |
+                echo 'export BUILD_STATUS="success"' >> $BASH_ENV
+          - run:
+              when: on_fail
+              name: set_status_failure
+              command: |
+                echo 'export BUILD_STATUS="failure"' >> $BASH_ENV
+          - run: 
+              command: |
+                curl -X POST -H "Content-Type: application/json" \
+                -H "X-SF-Token: <<parameters.signalfx_access_token>>" --data \
+                "[
+                  {
+                    \"eventType\": \"CircleCI <<parameters.event_type>>\",
+                    \"dimensions\": {
+                      \"service\": \"<<parameters.service>>\"
+                    },
+                    \"properties\": {
+                      \"vcs_revision\": \"$CIRCLE_SHA1\",
+                      \"build_num\": \"$CIRCLE_BUILD_NUM\",
+                      \"status\": \"$BUILD_STATUS\",
+                      \"build_url\": \"$CIRCLE_BUILD_URL\",
+                      \"user\": \"$CIRCLE_USERNAME\"
+                    },
+                    \"category\": \"USER_DEFINED\",
+                    \"timestamp\": $((`date +%s` * 1000))
+                  }
+                ]" \
+                https://ingest.<<parameters.signalfx_realm>>.signalfx.com/v2/event
+              name: send_signalfx_event
+    jobs:
+      signalfx_event_job:
+        parameters:
+          event_type:
+            default: ${CIRCLE_JOB}
+            description: Enter event name (e.g. deploy | build | rollback)
+            type: string
+        executor: signalfx_event_executor
+        steps:
+          - signalfx_event_command
+
+workflows:
+  main:
+    jobs:
+      - signalfx_orb/signalfx_event_job:
+          name: signalfx_event
+          event_type: deploy
