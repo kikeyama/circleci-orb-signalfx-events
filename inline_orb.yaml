@@ -71,12 +71,13 @@ orbs:
       signalfx_event_job:
         parameters:
           event_type:
-            default: ${CIRCLE_JOB}
+            default: ${CIRCLE_WORKFLOW_ID}
             description: Enter event name (e.g. deploy | build | rollback)
             type: string
         executor: signalfx_event_executor
         steps:
-          - signalfx_event_command
+          - signalfx_event_command:
+              event_type: <<parameters.event_type>>
 
 workflows:
   main:

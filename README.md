@@ -8,8 +8,10 @@ WIP
 
 ## Environment variables
 
-`SIGNALFX_ACCESS_TOKEN`: Your organization access token  
-`SIGNALFX_REALM`: Your realm (us0, us1, etc)
+Env var | Description
+------- | -----------
+`SIGNALFX_ACCESS_TOKEN` | Your organization access token  
+`SIGNALFX_REALM` | Your realm (us0, us1, etc)
 
 ## Docs
 

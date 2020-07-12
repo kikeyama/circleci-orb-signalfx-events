@@ -14,7 +14,7 @@ orbs:
         docker:
           - image: circleci/ruby:<<parameters.version>>
     commands:
-      event:
+      job-event:
         description: Send events to SignalFx
         parameters:
           signalfx_access_token:
@@ -31,7 +31,7 @@ orbs:
             type: string
           event_type:
             default: ${CIRCLE_JOB}
-            description: Enter event name (e.g. deploy | build | rollback)
+            description: Enter job event name (e.g. deploy | build | rollback)
             type: string
         steps:
           - run:
@@ -68,26 +68,40 @@ orbs:
                 https://ingest.<<parameters.signalfx_realm>>.signalfx.com/v2/event
               name: send_signalfx_event
     jobs:
-      event:
+      workflow-event:
         parameters:
           event_type:
-            default: ${CIRCLE_JOB}
-            description: Enter event name (e.g. deploy | build | rollback)
+            default: ${CIRCLE_WORKFLOW_ID}
+            description: Enter workflow event name (e.g. deploy | build | rollback)
             type: string
         executor: signalfx_event_executor
         steps:
-          - event
+          - job-event:
+              event_type: <<parameters.event_type>>
 
 examples:
-  event:
+  workflow-event:
     usage:
       version: 2.1
-      description: Send custom event to SignalFx - set deploy or build at event_typ
+      description: Send workflow event to SignalFx
       orbs:
         signalfx: kikeyama/signalfx@x.y.z
       workflows:
         main:
           jobs:
-            - signalfx/event:
+            - signalfx/workflow-event:
                 name: signalfx_event
                 event_type: deploy
+  job-event:
+    usage:
+      version: 2.1
+      description: Send job event to SignalFx
+      jobs:
+        build:
+          docker:
+            - image: <docker image>
+          steps:
+            - signalfx/job-event:
+                event_type: build my app
+      orbs:
+        signalfx: kikeyama/signalfx@x.y.z
