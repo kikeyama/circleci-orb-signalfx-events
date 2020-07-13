@@ -6,13 +6,12 @@ display:
 orbs:
   signalfx:
     executors:
-      signalfx_event_executor:
-        parameters:
-          version:
-            type: string
-            default: "2.4"
+      base:
         docker:
-          - image: circleci/ruby:<<parameters.version>>
+          - image: cibuilds/base:latest
+            environment:
+              TERM: dumb
+        resource_class: small
     commands:
       job-event:
         description: Send events to SignalFx
@@ -74,7 +73,7 @@ orbs:
             default: ${CIRCLE_WORKFLOW_ID}
             description: Enter workflow event name (e.g. deploy | build | rollback)
             type: string
-        executor: signalfx_event_executor
+        executor: base
         steps:
           - job-event:
               event_type: <<parameters.event_type>>
