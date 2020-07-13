@@ -14,7 +14,7 @@ orbs:
         resource_class: small
     commands:
       job-event:
-        description: Send events to SignalFx
+        description: Send job event to SignalFx
         parameters:
           signalfx_access_token:
             default: ${SIGNALFX_ACCESS_TOKEN}
@@ -26,7 +26,7 @@ orbs:
             type: string
           service:
             default: ${CIRCLE_PROJECT_REPONAME}
-            description: Service name used in SignalFx
+            description: Service name used in SignalFx dimension
             type: string
           event_type:
             default: ${CIRCLE_JOB}
@@ -69,6 +69,18 @@ orbs:
     jobs:
       workflow-event:
         parameters:
+          signalfx_access_token:
+            default: ${SIGNALFX_ACCESS_TOKEN}
+            description: Enter SignalFx access token or set env var SIGNALFX_ACCESS_TOKEN
+            type: string
+          signalfx_realm:
+            default: ${SIGNALFX_REALM}
+            description: Enter SignalFx realm (us0, us1, eu0, etc) or set env var SIGNALFX_REALM
+            type: string
+          service:
+            default: ${CIRCLE_PROJECT_REPONAME}
+            description: Service name used in SignalFx dimension
+            type: string
           event_type:
             default: ${CIRCLE_WORKFLOW_ID}
             description: Enter workflow event name (e.g. deploy | build | rollback)
@@ -76,6 +88,9 @@ orbs:
         executor: base
         steps:
           - job-event:
+              signalfx_access_token: <<parameters.signalfx_access_token>>
+              signalfx_realm: <<parameters.signalfx_realm>>
+              service: <<parameters.service>>
               event_type: <<parameters.event_type>>
 
 examples:
@@ -89,7 +104,10 @@ examples:
         main:
           jobs:
             - signalfx/workflow-event:
-                name: signalfx_event
+                name: signalfx_workflow_event
+                signalfx_access_token: ${SIGNALFX_ACCESS_TOKEN}
+                signalfx_realm: ${SIGNALFX_REALM}
+                service: service_name
                 event_type: deploy
   job-event:
     usage:
@@ -101,6 +119,10 @@ examples:
             - image: <docker image>
           steps:
             - signalfx/job-event:
+                name: signalfx_job_event
+                signalfx_access_token: ${SIGNALFX_ACCESS_TOKEN}
+                signalfx_realm: ${SIGNALFX_REALM}
+                service: service_name
                 event_type: build my app
       orbs:
         signalfx: kikeyama/signalfx@x.y.z
